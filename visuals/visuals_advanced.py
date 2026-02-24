@@ -428,9 +428,25 @@ def plot_professional_diverging_bars(split_df, aggregated_df, target_name,
     GAP   = 0.04
 
     def _draw_side(rows, sign, y_center):
-        """Stack bars outward from zero for a group going one direction."""
-        cumulative = 0.0
-        for _, row in rows.iterrows():
+        """
+        Draw bars for one side (sign = +1 or -1).
+        When multiple bars exist on the same side they are stacked VERTICALLY
+        (one sub-strip above the other) so they never overlap.
+        The total height slot per feature row is BAR_H; each sub-bar gets
+        an equal share of that height, centred around y_center.
+        """
+        rows = rows.reset_index(drop=True)
+        n = len(rows)
+        if n == 0:
+            return
+
+        V_GAP = 0.03                              # vertical gap between sub-bars
+        sub_h = (BAR_H - V_GAP * (n - 1)) / n    # height of each sub-bar
+
+        # Bottom of the lowest sub-bar, so the group is centred on y_center
+        y_start = y_center - BAR_H / 2
+
+        for i, (_, row) in enumerate(rows.iterrows()):
             width  = abs(row['plot_distance'])
             status = row['Status']
             count  = int(row['Count'])
@@ -438,25 +454,23 @@ def plot_professional_diverging_bars(split_df, aggregated_df, target_name,
                       if status == 'Passing'
                       else _DIVERGING_COLORS['failing'])
 
-            # Place bar flush against the previous one (with a small gap)
-            start = sign * (abs(cumulative) + GAP if cumulative != 0 else 0)
-            ax.barh(y_center, sign * width, left=start,
-                    height=BAR_H, color=color, alpha=0.85,
-                    edgecolor='white', linewidth=2.5, zorder=3)
+            y_sub = y_start + i * (sub_h + V_GAP) + sub_h / 2
 
-            outer_edge = start + sign * width
-            nudge      = sign * max(abs(outer_edge) * 0.04, 1)
-            text_x     = outer_edge + nudge
-            ha         = 'left' if sign > 0 else 'right'
+            ax.barh(y_sub, sign * width, left=0,
+                    height=sub_h, color=color, alpha=0.85,
+                    edgecolor='white', linewidth=1.5, zorder=3)
 
-            ax.text(text_x, y_center + 0.07, f'{width:.1f}%',
+            outer_edge = sign * width
+            nudge  = sign * max(abs(outer_edge) * 0.04, 0.5)
+            text_x = outer_edge + nudge
+            ha     = 'left' if sign > 0 else 'right'
+
+            ax.text(text_x, y_sub + sub_h * 0.15, f'{width:.1f}%',
                     ha=ha, va='center', fontsize=9,
                     fontweight='bold', color=color, zorder=5)
-            ax.text(text_x, y_center - 0.13, f'(n={count})',
+            ax.text(text_x, y_sub - sub_h * 0.25, f'(n={count})',
                     ha=ha, va='center', fontsize=7.5,
                     style='italic', color=color, alpha=0.8, zorder=5)
-
-            cumulative += sign * (width + GAP)
 
     for idx, feature in enumerate(reversed(top_features)):
         y_center = idx
@@ -465,7 +479,7 @@ def plot_professional_diverging_bars(split_df, aggregated_df, target_name,
         neg_rows = feature_data[feature_data['plot_distance'] < 0].sort_values(
             'plot_distance', ascending=True)
         pos_rows = feature_data[feature_data['plot_distance'] > 0].sort_values(
-            'plot_distance', ascending=True)
+            'plot_distance', ascending=False)
 
         _draw_side(neg_rows, -1, y_center)
         _draw_side(pos_rows, +1, y_center)
