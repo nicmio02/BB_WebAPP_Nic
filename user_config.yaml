@@ -1,0 +1,15 @@
+credentials:
+  usernames:
+    cbc_admin:
+      email: admin@test.com
+      name: CBC Admin
+      password: admin123
+    test_user:
+      email: test@test.com
+      name: Test User
+      password: test123
+
+cookie:
+  expiry_days: 30
+  key: soil_analysis_secret_cookie_key_2025
+  name: soil_app_cookie
