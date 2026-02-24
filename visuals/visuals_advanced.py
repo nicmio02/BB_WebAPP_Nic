@@ -427,46 +427,48 @@ def plot_professional_diverging_bars(split_df, aggregated_df, target_name,
     BAR_H = 0.35
     GAP   = 0.04
 
+    def _draw_side(rows, sign, y_center):
+        """Stack bars outward from zero for a group going one direction."""
+        cumulative = 0.0
+        for _, row in rows.iterrows():
+            width  = abs(row['plot_distance'])
+            status = row['Status']
+            count  = int(row['Count'])
+            color  = (_DIVERGING_COLORS['passing']
+                      if status == 'Passing'
+                      else _DIVERGING_COLORS['failing'])
+
+            # Place bar flush against the previous one (with a small gap)
+            start = sign * (abs(cumulative) + GAP if cumulative != 0 else 0)
+            ax.barh(y_center, sign * width, left=start,
+                    height=BAR_H, color=color, alpha=0.85,
+                    edgecolor='white', linewidth=2.5, zorder=3)
+
+            outer_edge = start + sign * width
+            nudge      = sign * max(abs(outer_edge) * 0.04, 1)
+            text_x     = outer_edge + nudge
+            ha         = 'left' if sign > 0 else 'right'
+
+            ax.text(text_x, y_center + 0.07, f'{width:.1f}%',
+                    ha=ha, va='center', fontsize=9,
+                    fontweight='bold', color=color, zorder=5)
+            ax.text(text_x, y_center - 0.13, f'(n={count})',
+                    ha=ha, va='center', fontsize=7.5,
+                    style='italic', color=color, alpha=0.8, zorder=5)
+
+            cumulative += sign * (width + GAP)
+
     for idx, feature in enumerate(reversed(top_features)):
         y_center = idx
         feature_data = plot_data[plot_data['Feature'] == feature].copy()
 
         neg_rows = feature_data[feature_data['plot_distance'] < 0].sort_values(
-            'plot_distance', ascending=False)
+            'plot_distance', ascending=True)
         pos_rows = feature_data[feature_data['plot_distance'] > 0].sort_values(
             'plot_distance', ascending=True)
 
-        def _draw_side(rows, sign, y=y_center):
-            cumulative = 0.0
-            for _, row in rows.iterrows():
-                width  = abs(row['plot_distance'])
-                status = row['Status']
-                count  = int(row['Count'])
-                color  = (_DIVERGING_COLORS['passing']
-                          if status == 'Passing'
-                          else _DIVERGING_COLORS['failing'])
-
-                start = sign * (cumulative + (GAP if cumulative > 0 else 0))
-                ax.barh(y, sign * width, left=start,
-                        height=BAR_H, color=color, alpha=0.85,
-                        edgecolor='white', linewidth=2.5, zorder=3)
-
-                outer_edge = start + sign * width
-                nudge      = sign * max(abs(outer_edge) * 0.04, 1)
-                text_x     = outer_edge + nudge
-                ha         = 'left' if sign > 0 else 'right'
-
-                ax.text(text_x, y + 0.07, f'{width:.1f}%',
-                        ha=ha, va='center', fontsize=9,
-                        fontweight='bold', color=color, zorder=5)
-                ax.text(text_x, y - 0.13, f'(n={count})',
-                        ha=ha, va='center', fontsize=7.5,
-                        style='italic', color=color, alpha=0.8, zorder=5)
-
-                cumulative += width + GAP
-
-        _draw_side(neg_rows, -1)
-        _draw_side(pos_rows, +1)
+        _draw_side(neg_rows, -1, y_center)
+        _draw_side(pos_rows, +1, y_center)
 
     ax.axvline(x=0, color='#2c3e50', linewidth=2.5, alpha=0.8, zorder=2)
     ax.set_yticks(np.arange(n_features))
