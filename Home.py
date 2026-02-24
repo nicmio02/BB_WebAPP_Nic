@@ -58,7 +58,7 @@ col1.info(f"👤 **Ingelogd als:** {name}")
 st.divider()
 
 # --- UPLOAD ---
-st.subheader("Importeer Waterbodem Onderzoek")
+st.subheader("Bestand Importeren")
 agreement_checked = st.checkbox(
     "Ik ga akkoord met de [Gebruiksvoorwaarden](https://www.circulairebaggerconsortium.nl/) "
     "en bevestig dat ik dit rapport mag verwerken."
