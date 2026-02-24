@@ -1,0 +1,11 @@
+[theme]
+# This automatically sets all default text to black and backgrounds to white
+base = "light"
+
+# This is your primary brand color (used for sliders, buttons, accents)
+primaryColor = "#2E7D32"
+
+[client]
+# "minimal" hides the Deploy button and simplifies the hamburger menu
+# "viewer" hides the Deploy button but keeps most of the menu
+toolbarMode = "minimal"

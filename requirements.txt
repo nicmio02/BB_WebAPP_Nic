@@ -1,0 +1,10 @@
+streamlit
+streamlit-authenticator
+pandas
+numpy
+matplotlib
+seaborn
+plotly
+google-genai
+pydantic
+PyMuPDF
